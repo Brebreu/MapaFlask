@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Propriedades</title>
+</head>
+<body>
+    <h1>Mapa de Propriedades</h1>
+    <div id="map" style="width: 800px; height: 600px;"></div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function submitForm() {
+            var lat = $('#lat').val();
+            var lon = $('#lon').val();
+            $.post('/map', {lat: lat, lon: lon}, function(data) {
+                $('#map').html(data);
+            });
+        }
+    </script>
+    <form onsubmit="submitForm(); return false;">
+        Latitude: <input type="text" id="lat" value="-19.7448"><br>
+        Longitude: <input type="text" id="lon" value="-47.9388"><br>
+        <input type="submit" value="Buscar">
+    </form>
+</body>
+</html>
