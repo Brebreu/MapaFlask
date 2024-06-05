@@ -4,167 +4,150 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Propriedades</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-        }
-        #map-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
         #map {
+            height: 80vh;
             width: 100%;
-            height: 100%;
         }
-        .leaflet-control-custom {
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 1000;
-        }
-        .leaflet-control-custom:hover {
-            background: #f4f4f4;
-        }
-        .icon-button {
-            width: 24px;
-            height: 24px;
-            background: url('https://cdn-icons-png.flaticon.com/512/992/992651.png') no-repeat center center;
-            background-size: contain;
-        }
-        #markerForm {
-            display: none;
-            position: absolute;
-            top: 50px;
-            right: 50px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        .form-container {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div id="map-container">
-        {{ map_html|safe }}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <div id="map"></div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-container">
+                    <h3>Mapa de Propriedades e Busca de Proprietário</h3>
+                    <form method="GET" action="/buscar_proprietario">
+                        <div class="form-group">
+                            <label for="latitude">Latitude:</label>
+                            <input type="text" class="form-control" id="latitude" name="latitude" placeholder="Latitude">
+                        </div>
+                        <div class="form-group">
+                            <label for="longitude">Longitude:</label>
+                            <input type="text" class="form-control" id="longitude" name="longitude" placeholder="Longitude">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Buscar Proprietário</button>
+                        <button type="button" class="btn btn-secondary" onclick="addUserMarker()">Adicionar Marcador</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Formulário para adicionar marcador -->
-    <div id="markerForm">
-        <form id="form">
-            Latitude: <input type="text" id="lat" name="lat" required><br>
-            Longitude: <input type="text" id="lon" name="lon" required><br>
-            <button type="submit">Adicionar</button>
-            <button type="button" id="closeFormButton">Cancelar</button>
-        </form>
-    </div>
-
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        $(document).ready(function() {
-            function initializeMap() {
-                var map = L.map('map').setView([-19.7448, -47.9388], 10);
-                console.log('Map initialized');
+        var map = L.map('map').setView([-19.7448, -47.9388], 10);
 
-                var openStreetMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
+        var baseLayers = {
+            "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map),
+            "CartoDB Positron": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: 'Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.'
+            }),
+            "CartoDB Dark Matter": L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: 'Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.'
+            }),
+            "Esri WorldImagery": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            })
+        };
 
-                var esriWorldImageryLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}', {
-                    attribution: 'Tiles &copy; Esri'
-                });
+        var limitesAPA = L.layerGroup();
+        var areaPasto = L.layerGroup();
+        var car = L.layerGroup();
+        var centroides = L.layerGroup();
+        var userMarkers = L.layerGroup().addTo(map);
 
-                var userMarkersLayer = L.layerGroup().addTo(map);
+        var overlays = {
+            "Limites APA": limitesAPA,
+            "Área de Pasto": areaPasto,
+            "CAR": car,
+            "Centroides": centroides,
+            "User Markers": userMarkers
+        };
 
-                // Carregar os dados GeoJSON
-                $.getJSON('/limite_apa', function(data) {
-                    L.geoJson(data).addTo(map);
-                });
+        L.control.layers(baseLayers, overlays).addTo(map);
 
-                $.getJSON('/area_do_pasto', function(data) {
-                    L.geoJson(data, {
-                        style: { color: 'green', fillColor: 'green' }
-                    }).addTo(map);
-                });
-
-                $.getJSON('/skimmed_properties', function(data) {
-                    L.geoJson(data, {
-                        style: { color: 'gray', fillColor: 'gray' }
-                    }).addTo(map);
-                });
-
-                // Controle personalizado para adicionar marcador
-                var customControl = L.Control.extend({
-                    options: {
-                        position: 'topright'
-                    },
-                    onAdd: function (map) {
-                        var container = L.DomUtil.create('div', 'leaflet-control-custom leaflet-bar');
-
-                        console.log('Custom control added');
-
-                        var button = L.DomUtil.create('div', 'icon-button', container);
-                        L.DomEvent.on(container, 'click', function () {
-                            console.log('Button clicked');
-                            $('#markerForm').toggle();
-                        });
-                        return container;
-                    }
-                });
-
-                map.addControl(new customControl());
-
-                $('#form').on('submit', function(event) {
-                    event.preventDefault();
-                    var lat = $('#lat').val();
-                    var lon = $('#lon').val();
-                    $.post('/add_marker', { lat: lat, lon: lon }, function(data) {
-                        if (data.status === "success") {
-                            var marker = L.marker([data.lat, data.lon]).addTo(userMarkersLayer)
-                                .bindPopup("User added marker at (" + data.lat + ", " + data.lon + ")");
-                            $('#markerForm').hide();
-                        } else {
-                            alert(data.message);
-                        }
-                    });
-                });
-
-                $('#closeFormButton').on('click', function() {
-                    $('#markerForm').hide();
-                });
-
-                $('#removeMarkers').on('click', function() {
-                    $.post('/remove_markers', function(data) {
-                        if (data.status === "success") {
-                            userMarkersLayer.clearLayers();
-                        }
-                    });
-                });
-
-                var baseLayers = {
-                    "OpenStreetMap": openStreetMapLayer,
-                    "Esri WorldImagery": esriWorldImageryLayer
-                };
-
-                var overlayLayers = {
-                    "Limites APA": limites_group,
-                    "Área de Pasto": area_pasto_group,
-                    "CAR": car_group,
-                    "Centroides": marcadores_group,
-                    "User Markers": userMarkersLayer
-                };
-
-                L.control.layers(baseLayers, overlayLayers).addTo(map);
+        function addUserMarker() {
+            var latitude = document.getElementById('latitude').value;
+            var longitude = document.getElementById('longitude').value;
+            if (latitude && longitude) {
+                var marker = L.marker([latitude, longitude]).addTo(userMarkers);
+                map.setView([latitude, longitude], 13);
             }
+        }
 
-            setTimeout(initializeMap, 500);  // Adiciona um pequeno atraso para garantir que o mapa esteja disponível no DOM
-        });
+        function loadData(url, layerGroup, style) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    L.geoJSON(JSON.parse(data), { style: style }).addTo(layerGroup);
+                    console.log(`Data loaded for ${url}`, data);
+                })
+                .catch(error => {
+                    console.error(`Failed to load data from ${url}:`, error);
+                });
+        }
+
+        // Estilos personalizados para as camadas
+        var carStyle = {
+            color: 'darkgray',
+            weight: 2,
+            fill: false
+        };
+
+        var areaPastoStyle = {
+            color: 'green',
+            weight: 1,
+            fillColor: 'lightgreen',
+            fillOpacity: 0.5
+        };
+
+        var limitesAPAStyle = {
+            color: 'orange',
+            weight: 3,
+            fill: false
+        };
+
+        loadData('/limite_apa', limitesAPA, limitesAPAStyle);
+        loadData('/area_do_pasto', areaPasto, areaPastoStyle);
+        loadData('/skimmed_properties', car, carStyle);
+
+        // Adicionar marcadores para cada ponto
+        {% for row in data %}
+        L.circleMarker([{{ row['Centroide_Prop_y'] | replace(',', '.') }}, {{ row['Centroide_Prop_x'] | replace(',', '.') }}], {
+            radius: 4,
+            color: 'red',
+            fill: true,
+            fillColor: 'red',
+            fillOpacity: 0.6
+        }).bindPopup(`
+            CÓDIGO_IMOVEL: {{ row['CÓDIGO_IMOVEL'] }}<br>
+            NUM_MODULO: {{ row['NUM_MODULO'] }}<br>
+            SITUAÇÃO: {{ row['SITUAÇÃO'] }}<br>
+            IMÓVEL: {{ row['IMÓVEL'] }}<br>
+            CPF DO(S) PROPRIETÁRIO(S): {{ row['CPF DO(S) PROPRIETÁRIO(S)'] }}<br>
+            PROPRIETÁRIO: {{ row['PROPRIETÁRIO'] }}<br>
+            Área_propriedade (ha): {{ row['Área_propriedade (ha)'] }}<br>
+            Área_degradada_APA (ha): {{ row['Área_degradada_APA (ha)'] }}<br>
+            % Degradado: {{ row['% Degradado'] }}<br>
+            Centroide_Prop_x: {{ row['Centroide_Prop_x'] }}<br>
+            Centroide_Prop_y: {{ row['Centroide_Prop_y'] }}
+        `).addTo(centroides);
+        {% endfor %}
     </script>
 </body>
 </html>

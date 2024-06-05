@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado da Busca</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f7f7f7;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h1>Resultado da Busca</h1>
+    <p>Informações do proprietário encontrado:</p>
+    <div class="list-group mb-4">
+        <div class="list-group-item">
+            <strong>CPF:</strong> {{ cpf_prop }} <br>
+            <strong>Nome:</strong> {{ nome_prop }}
+        </div>
+    </div>
+    <div>
+        <a href="/" class="btn btn-primary">Voltar</a>
+    </div>
+</div>
+
+</body>
+</html>
