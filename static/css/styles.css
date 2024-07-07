@@ -1,0 +1,136 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    color: #212529;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    overflow-x: hidden; /* Impedir overflow horizontal */
+}
+
+.container-fluid, .row {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#map {
+    height: 100vh;
+    width: 100%; /* O mapa deve ocupar 100% da largura por padrão */
+    transition: margin-left 0.5s;
+}
+
+.sidebar {
+    height: 100%;
+    width: 300px;
+    position: fixed;
+    top: 0;
+    left: -300px;
+    background-color: #2c3e50;
+    overflow-x: hidden;
+    transition: left 0.5s;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    color: white;
+    z-index: 1000; /* Certifique-se que a sidebar esteja acima do mapa */
+}
+
+.sidebar.open {
+    left: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    flex: 1;
+    padding-left: 10px;
+}
+
+.sidebar-header .closebtn {
+    font-size: 1.5em;
+    cursor: pointer;
+    padding-right: 10px;
+}
+
+.sidebar .form-group {
+    margin-bottom: 15px;
+}
+
+.sidebar .form-group label {
+    font-weight: bold;
+}
+
+/*Modificar para justificar os botoes a esquerda */
+.sidebar .btn {
+    width: calc(100% - 40px); /* Define a largura dos botões */
+    max-width: 250px; /* Define a largura máxima dos botões */
+    padding: 10px 20px;
+    text-decoration: none;
+    font-size: 1em;
+    color: white;
+    display: block;
+    transition: 0.3s;
+    margin: 10px 0; /* Define o espaçamento vertical dos botões */
+    margin-left: 0px;
+    border-radius: 4px;
+    text-align: center; /* Centraliza o texto dos botões */
+}
+
+.sidebar .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.sidebar .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.sidebar .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.sidebar a:hover, .sidebar .btn:hover {
+    color: #f1f1f1;
+    background-color: #34495e;
+}
+
+#openSidebar {
+    position: absolute;
+    top: 20px;
+    left: 10px;
+    z-index: 1100; /* Certifique-se que o ícone esteja acima do mapa */
+    cursor: pointer;
+    background-color: white; /* Adiciona um fundo branco ao botão */
+    padding: 5px; /* Adiciona um pouco de padding para melhorar a aparência */
+    border-radius: 4px; /* Adiciona bordas arredondadas */
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65); /* Adiciona uma sombra para dar destaque */
+}
+
+.btn-open-sidebar img {
+    width: 30px;
+    height: 30px;
+}
+
+#main {
+    transition: margin-left 0.5s;
+    padding: 0;
+}
+
+.open-sidebar #main {
+    margin-left: 300px; /* Ajuste o margin-left do main quando a sidebar estiver aberta */
+}
+
+.closed-sidebar #main {
+    margin-left: 0; /* Remova o margin-left do main quando a sidebar estiver fechada */
+}

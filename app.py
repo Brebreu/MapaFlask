@@ -3,14 +3,17 @@ import pandas as pd
 import geopandas as gpd
 import os
 from shapely.geometry import Point
+import json
 
 app = Flask(__name__)
 
 # Caminho para o arquivo Shapefile
 SHP_FILEPATH = os.path.join('.', 'D:/Sipade/SipadeIC/AplicacaoBuscaDados/shp_merged/updated_shapefile.shp')
+JSON_FILEPATH = os.path.join('.', 'propriedades_com_degradacao.json')
 
-# Carregar os dados do arquivo Excel
-data = pd.read_excel('propriedades_com_degradacao.xlsx', engine='openpyxl')
+# Carregar os dados do arquivo JSON
+with open(JSON_FILEPATH, 'r', encoding='utf-8') as f:
+    data = json.load(f)["centroide_propriedade"]
 
 def buscar_propriedades_imovel(point):
     """Busca as propriedades ['PROP_CPF'] e ['PROP'] do imóvel que contém o ponto especificado na geometria."""
@@ -26,7 +29,7 @@ def index():
     latitude = request.args.get('latitude')
     longitude = request.args.get('longitude')
 
-    return render_template('index.html', latitude=latitude, longitude=longitude, data=data.to_dict('records'))
+    return render_template('index.html', latitude=latitude, longitude=longitude, data=data)
 
 @app.route('/limite_apa')
 def limite_apa():
